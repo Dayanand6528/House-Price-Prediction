@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beta RealEstate - AI House Price Prediction System</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-background"></div>
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="app-header animate-fade-in">
+            <div class="logo">
+                <i data-lucide="home" class="logo-icon"></i>
+                <h1>Beta<span>Estate</span></h1>
+            </div>
+            <p class="subtitle">Next-Gen AI House Price Prediction Dashboard</p>
+        </header>
+
+        <!-- Main Dashboard Grid -->
+        <main class="dashboard-grid">
+            
+            <!-- Left Panel: Input Form -->
+            <section class="card glassmorphism form-card animate-slide-in-left">
+                <div class="card-header">
+                    <i data-lucide="sliders" class="card-icon text-cyan"></i>
+                    <h2>Property Parameters</h2>
+                </div>
+                <p class="card-description">Configure the features of the property to estimate its current market value.</p>
+                
+                <form id="prediction-form" class="prediction-form">
+                    <!-- Area Input -->
+                    <div class="form-group">
+                        <label for="area">
+                            <span>Area (sq. ft.)</span>
+                            <span class="tooltip" data-tooltip="Enter the total built-up area of the house in square feet.">
+                                <i data-lucide="help-circle" class="tooltip-icon"></i>
+                            </span>
+                        </label>
+                        <div class="input-wrapper">
+                            <i data-lucide="maximize-2" class="input-icon"></i>
+                            <input type="number" id="area" name="area" placeholder="e.g. 1800" min="200" max="10000" required>
+                        </div>
+                    </div>
+
+                    <!-- Row for Beds & Baths -->
+                    <div class="form-row">
+                        <!-- Bedrooms -->
+                        <div class="form-group">
+                            <label for="bedrooms">Bedrooms</label>
+                            <div class="input-wrapper">
+                                <i data-lucide="bed-double" class="input-icon"></i>
+                                <select id="bedrooms" name="bedrooms" required>
+                                    <option value="1">1 BHK</option>
+                                    <option value="2" selected>2 BHK</option>
+                                    <option value="3">3 BHK</option>
+                                    <option value="4">4 BHK</option>
+                                    <option value="5">5 BHK</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Bathrooms -->
+                        <div class="form-group">
+                            <label for="bathrooms">Bathrooms</label>
+                            <div class="input-wrapper">
+                                <i data-lucide="bath" class="input-icon"></i>
+                                <select id="bathrooms" name="bathrooms" required>
+                                    <option value="1">1 Bath</option>
+                                    <option value="2" selected>2 Baths</option>
+                                    <option value="3">3 Baths</option>
+                                    <option value="4">4 Baths</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- House Age Input -->
+                    <div class="form-group">
+                        <label for="house_age">
+                            <span>Property Age (Years)</span>
+                            <span class="tooltip" data-tooltip="The number of years since construction was completed. 0 for new built.">
+                                <i data-lucide="help-circle" class="tooltip-icon"></i>
+                            </span>
+                        </label>
+                        <div class="input-wrapper">
+                            <i data-lucide="calendar" class="input-icon"></i>
+                            <input type="number" id="house_age" name="house_age" placeholder="e.g. 5" min="0" max="100" required>
+                        </div>
+                    </div>
+
+                    <!-- Parking Toggle -->
+                    <div class="form-group toggle-group">
+                        <div class="toggle-label-wrapper">
+                            <span class="toggle-title">Parking Space</span>
+                            <span class="toggle-desc">Dedicated garage or parking lot</span>
+                        </div>
+                        <label class="switch-container">
+                            <input type="checkbox" id="parking" name="parking">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn-primary" id="predict-btn">
+                        <span class="btn-text">Generate Valuation</span>
+                        <div class="btn-loader hidden">
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                        </div>
+                    </button>
+                </form>
+            </section>
+
+            <!-- Right Panel: Prediction Results & Summary Statistics -->
+            <div class="results-column animate-slide-in-right">
+                
+                <!-- Main Prediction Value Panel -->
+                <section class="card glassmorphism prediction-result-card glowing-border-cyan">
+                    <div class="card-header">
+                        <i data-lucide="trending-up" class="card-icon text-purple"></i>
+                        <h2>Estimated Valuation</h2>
+                    </div>
+                    <div class="price-display-container">
+                        <p class="price-label">ESTIMATED MARKET VALUE</p>
+                        <div class="price-value-wrapper">
+                            <span class="currency">₹</span>
+                            <span id="predicted-price" class="price-value">0</span>
+                        </div>
+                        <p class="valuation-meta">Powered by Random Forest Regressor</p>
+                    </div>
+                    <!-- Indicator Lights or tags -->
+                    <div class="price-details-summary hidden" id="price-details-summary">
+                        <span class="summary-tag"><i data-lucide="layers"></i> <span id="sum-area">--</span> sq.ft</span>
+                        <span class="summary-tag"><i data-lucide="bed"></i> <span id="sum-beds">--</span> Beds</span>
+                        <span class="summary-tag"><i data-lucide="shield-check"></i> Age: <span id="sum-age">--</span> yr</span>
+                    </div>
+                </section>
+
+                <!-- Summary Statistics Grid -->
+                <div class="stats-grid">
+                    <!-- Stat Card 1 -->
+                    <div class="card glassmorphism stat-card">
+                        <div class="stat-icon-wrapper bg-cyan-soft">
+                            <i data-lucide="calculator" class="stat-icon text-cyan"></i>
+                        </div>
+                        <div class="stat-info">
+                            <p class="stat-label">Total Valuations</p>
+                            <h3 id="stat-total" class="stat-value">0</h3>
+                        </div>
+                    </div>
+
+                    <!-- Stat Card 2 -->
+                    <div class="card glassmorphism stat-card">
+                        <div class="stat-icon-wrapper bg-purple-soft">
+                            <i data-lucide="indian-rupee" class="stat-icon text-purple"></i>
+                        </div>
+                        <div class="stat-info">
+                            <p class="stat-label">Average Appraised Price</p>
+                            <h3 id="stat-avg" class="stat-value">₹0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Panel: Navigation Tabs for Analytics & History -->
+        <section class="card glassmorphism dashboard-tabs-card animate-fade-in delay-2">
+            <div class="tabs-header">
+                <button class="tab-btn active" data-tab="analytics-tab">
+                    <i data-lucide="bar-chart-2"></i>
+                    <span>Market Analytics</span>
+                </button>
+                <button class="tab-btn" data-tab="history-tab">
+                    <i data-lucide="history"></i>
+                    <span>Valuation History</span>
+                </button>
+            </div>
+
+            <div class="tab-content-container">
+                <!-- Analytics Tab Content -->
+                <div class="tab-content active" id="analytics-tab">
+                    <div class="charts-grid">
+                        <div class="chart-wrapper">
+                            <h3>Area vs. Valuation Correlation (Scatter)</h3>
+                            <div class="canvas-container">
+                                <canvas id="scatterChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-wrapper">
+                            <h3>Average Valuation by Bedroom Count</h3>
+                            <div class="canvas-container">
+                                <canvas id="bedroomChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History Tab Content -->
+                <div class="tab-content" id="history-tab">
+                    <div class="history-table-container">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Area (sq.ft)</th>
+                                    <th>Beds</th>
+                                    <th>Baths</th>
+                                    <th>Parking</th>
+                                    <th>Age (Years)</th>
+                                    <th>Appraised Price</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body">
+                                <tr>
+                                    <td colspan="7" class="empty-state">
+                                        <i data-lucide="database-backup" class="empty-icon"></i>
+                                        <p>No appraisal records found. Submit property details to populate the database.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
